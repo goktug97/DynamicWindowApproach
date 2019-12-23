@@ -59,11 +59,22 @@ calculateClearanceCost(Pose pose, Velocity velocity, Point *pointCloud, Robot co
   float dx;
   float dy;
 
+  float x;
+  float y;
+
   while (time < config.predictTime) {
     pPose = motion(pPose, velocity, config.dt);
+      
     for(int i = 0; i < sizeof(pointCloud)/sizeof(pointCloud[0]); ++i) {
       dx = pPose.point.x - pointCloud[i].x;
       dy = pPose.point.y - pointCloud[i].y;
+      x = -dx * cos(pPose.yaw) +  -dy * -sin(pPose.yaw);
+      y = -dx * sin(pPose.yaw) +  -dy * cos(pPose.yaw);
+      if (x <= config.base.xtop &&
+	  x >= config.base.xbottom &&
+	  y <= config.base.yleft &&
+	  y >= config.base.yright)
+	return FLT_MAX;
       r = sqrt(dx*dx + dy*dy);
       if (r < minr)
 	minr = r;
