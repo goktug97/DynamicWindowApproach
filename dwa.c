@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 
 /* https://stackoverflow.com/a/3437484 */
  #define max(a,b) \
@@ -99,7 +100,7 @@ Pose motion(Pose pose, Velocity velocity, float dt){
 }
 
 float calculateVelocityCost(Velocity velocity, Robot config) {
-  return config.velocity * (config.maxSpeed - velocity.linearVelocity);
+  return config.maxSpeed - velocity.linearVelocity;
 }
 
 float calculateHeadingCost(Pose pose, Point goal) {
@@ -113,33 +114,53 @@ float calculateHeadingCost(Pose pose, Point goal) {
 float
 calculateClearanceCost(Pose pose, Velocity velocity, Point *pointCloud, Robot config) {
   Pose pPose = pose;
-  float clearanceCost;
   float time = 0.0;
+  float minr = FLT_MAX;
+  float r;
+  float dx;
+  float dy;
+
   while (time < config.predictTime) {
     pPose = motion(pPose, velocity, config.dt);
+    for(int i = 0; i < sizeof(pointCloud)/sizeof(pointCloud[0]); ++i) {
+      dx = pPose.point.x - pointCloud[i].x;
+      dy = pPose.point.y - pointCloud[i].y;
+      r = sqrt(dx*dx + dy*dy);
+      if (r < minr)
+	minr = r;
+    }
     time += config.dt;
   }
-  return clearanceCost;
+  return 1.0 / minr;
 }
 
 Velocity
 planning(Pose pose, Velocity velocity, Point goal, Point *pointCloud, Robot config){
   DynamicWindow *dw;
   createDynamicWindow(velocity, config, &dw);
-  free(dw);
   Velocity pVelocity;
   Pose pPose = pose;
+  float total_cost = FLT_MAX;
+  float cost;
+  Velocity bestVelocity;
   for (int i = 0; i < dw->nPossibleV; ++i) {
     for (int j = 0; j < dw->nPossibleW; ++j) {
       pPose = motion(pPose, pVelocity, config.predictTime);
       pVelocity.linearVelocity = dw->possibleV[i];
       pVelocity.angularVelocity = dw->possibleW[j];
-      calculateVelocityCost(pVelocity, config);
-      calculateHeadingCost(pPose, goal);
-      calculateClearanceCost(pose, pVelocity, pointCloud, config);
+
+      cost = 
+	config.velocity * calculateVelocityCost(pVelocity, config) + 
+	config.heading * calculateHeadingCost(pPose, goal) +
+	config.clearance * calculateClearanceCost(pose, pVelocity, pointCloud, config);
+      if (cost < total_cost) {
+	total_cost = cost;
+	bestVelocity = pVelocity;
+      }
     }
   }
-  return velocity;
+  free(dw);
+  return bestVelocity;
 }
 
 void main() {
@@ -192,6 +213,8 @@ void main() {
 
   pose = motion(pose, velocity, config.dt);
   printf("%f %f %f\n", pose.point.x, pose.point.y, pose.yaw);
-
-  planning(pose, velocity, goal, pointCloud, config);
+  velocity = planning(pose, velocity, goal, pointCloud, config);
+  printf("%f %f\n", velocity.linearVelocity, velocity.angularVelocity);
+  pose = motion(pose, velocity, config.dt);
+  printf("%f %f %f\n", pose.point.x, pose.point.y, pose.yaw);
 }
