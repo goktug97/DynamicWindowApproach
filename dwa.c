@@ -90,5 +90,25 @@ createDynamicWindow(Velocity velocity, Robot robot, DynamicWindow **dynamicWindo
   }
 }
 
+Pose motion(Pose pose, Velocity velocity, float dt){
+  Pose new_pose;
+  new_pose.yaw = pose.yaw + velocity.angularVelocity * dt;
+  new_pose.point.x = pose.point.x + velocity.linearVelocity * cos(new_pose.yaw) * dt;
+  new_pose.point.y = pose.point.y + velocity.linearVelocity * sin(new_pose.yaw) * dt;
+  return new_pose;
+}
+
+float calculateVelocityCost(Velocity velocity, Robot config) {
+  return config.velocity * (config.maxSpeed - velocity.linearVelocity);
+}
+
+float calculateHeadingCost(Pose pose, Point goal) {
+  float dx = goal.x - pose.point.x;
+  float dy = goal.y - pose.point.y;
+  float angleError = atan2(dy, dx);
+  float angleCost = angleError - pose.yaw;
+  return fabs(atan2(sin(angleCost), cos(angleCost)));
+}
+
 void main() {
 }
