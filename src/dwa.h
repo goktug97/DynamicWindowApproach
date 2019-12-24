@@ -5,16 +5,15 @@
 #include <float.h>
 
 /* https://stackoverflow.com/a/3437484 */
- #define max(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a > _b ? _a : _b; })
+#define max(a,b)				\
+  ({ __typeof__ (a) _a = (a);			\
+    __typeof__ (b) _b = (b);			\
+    _a > _b ? _a : _b; })
 
-/* https://stackoverflow.com/a/3437484 */
- #define min(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })
+#define min(a,b)				\
+  ({ __typeof__ (a) _a = (a);			\
+    __typeof__ (b) _b = (b);			\
+    _a < _b ? _a : _b; })
 
 typedef struct {
   float xtop;
@@ -37,7 +36,7 @@ typedef struct {
   float clearance;
   float velocity;
   Rect base;
-} Robot;
+} Config;
 
 typedef struct {
   float linearVelocity;
@@ -48,6 +47,11 @@ typedef struct {
   float x;
   float y;
 } Point;
+
+typedef struct {
+  int size;
+  Point *points;
+} PointCloud;
 
 typedef struct {
   Point point;
@@ -61,11 +65,17 @@ typedef struct {
   float *possibleW;
 } DynamicWindow;
 
-void createDynamicWindow(Velocity velocity, Robot robot, DynamicWindow **dynamicWindow);
+void
+createDynamicWindow(Velocity velocity, Config config, DynamicWindow **dynamicWindow);
 Pose motion(Pose pose, Velocity velocity, float dt);
-float calculateVelocityCost(Velocity velocity, Robot config);
+float calculateVelocityCost(Velocity velocity, Config config);
 float calculateHeadingCost(Pose pose, Point goal);
 float
-calculateClearanceCost(Pose pose, Velocity velocity, Point *pointCloud, Robot config);
+calculateClearanceCost
+(Pose pose, Velocity velocity, PointCloud *pointCloud, Config config);
 Velocity
-planning(Pose pose, Velocity velocity, Point goal, Point *pointCloud, Robot config);
+planning
+(Pose pose, Velocity velocity, Point goal, PointCloud *pointCloud, Config config);
+PointCloud* createPointCloud(int size);
+void freePointCloud(PointCloud* pointCloud);
+void freeDynamicWindow(DynamicWindow *dynamicWindow);

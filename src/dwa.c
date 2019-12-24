@@ -1,33 +1,48 @@
 #include "dwa.h"
 
 void
-createDynamicWindow(Velocity velocity, Robot robot, DynamicWindow **dynamicWindow) {
-  float minV = max(robot.minSpeed, velocity.linearVelocity - robot.maxAccel * robot.dt);
-  float maxV = min(robot.maxSpeed, velocity.linearVelocity + robot.maxAccel * robot.dt);
+createDynamicWindow(Velocity velocity, Config config, DynamicWindow **dynamicWindow) {
+  float minV = max(config.minSpeed, velocity.linearVelocity - config.maxAccel * config.dt);
+  float maxV = min(config.maxSpeed, velocity.linearVelocity + config.maxAccel * config.dt);
   float minW =
-    max(-robot.maxYawrate, velocity.angularVelocity - robot.maxdYawrate * robot.dt);
+    max(-config.maxYawrate, velocity.angularVelocity - config.maxdYawrate * config.dt);
   float maxW =
-    max(robot.maxYawrate, velocity.angularVelocity + robot.maxdYawrate * robot.dt);
+    max(config.maxYawrate, velocity.angularVelocity + config.maxdYawrate * config.dt);
 
-  int nPossibleV = (maxV - minV) / robot.velocityResolution;
-  int nPossibleW = (maxW - minW) / robot.yawrateResolution;
-  *dynamicWindow = malloc(sizeof(DynamicWindow) +
-			  nPossibleV * sizeof(float) +
-			  nPossibleW * sizeof(float) +
-			  2 * sizeof(int));
+  int nPossibleV = (maxV - minV) / config.velocityResolution;
+  int nPossibleW = (maxW - minW) / config.yawrateResolution;
+  *dynamicWindow = malloc(sizeof(DynamicWindow));
 
   (*dynamicWindow)->possibleV = malloc(nPossibleV * sizeof(float));
   (*dynamicWindow)->possibleW = malloc(nPossibleW * sizeof(float));
   (*dynamicWindow)->nPossibleV = nPossibleV;
   (*dynamicWindow)->nPossibleW = nPossibleW;
 
-  for(int i=0; i < (maxV - minV) / robot.velocityResolution; i++) {
-    (*dynamicWindow)->possibleV[i] = minV + (float)i * robot.velocityResolution;
+  for(int i=0; i < nPossibleV; i++) {
+    (*dynamicWindow)->possibleV[i] = minV + (float)i * config.velocityResolution;
   }
 
-  for(int i=0; i < (maxW - minW) / robot.yawrateResolution; i++) {
-    (*dynamicWindow)->possibleW[i] = minW + (float)i * robot.yawrateResolution;
+  for(int i=0; i < nPossibleW; i++) {
+    (*dynamicWindow)->possibleW[i] = minW + (float)i * config.yawrateResolution;
   }
+}
+
+void freeDynamicWindow(DynamicWindow *dynamicWindow){
+  free(dynamicWindow->possibleV);
+  free(dynamicWindow->possibleW);
+  free(dynamicWindow);
+}
+
+PointCloud* createPointCloud(int size){
+  PointCloud* pointCloud = malloc(sizeof(PointCloud));
+  pointCloud->points = malloc(size * sizeof(Point));
+  pointCloud->size = size;
+  return pointCloud;
+}
+
+void freePointCloud(PointCloud* pointCloud){
+  free(pointCloud->points);
+  free(pointCloud);
 }
 
 Pose motion(Pose pose, Velocity velocity, float dt){
@@ -38,7 +53,7 @@ Pose motion(Pose pose, Velocity velocity, float dt){
   return new_pose;
 }
 
-float calculateVelocityCost(Velocity velocity, Robot config) {
+float calculateVelocityCost(Velocity velocity, Config config) {
   return config.maxSpeed - velocity.linearVelocity;
 }
 
@@ -51,7 +66,8 @@ float calculateHeadingCost(Pose pose, Point goal) {
 }
 
 float
-calculateClearanceCost(Pose pose, Velocity velocity, Point *pointCloud, Robot config) {
+calculateClearanceCost
+(Pose pose, Velocity velocity, PointCloud *pointCloud, Config config) {
   Pose pPose = pose;
   float time = 0.0;
   float minr = FLT_MAX;
@@ -65,17 +81,18 @@ calculateClearanceCost(Pose pose, Velocity velocity, Point *pointCloud, Robot co
   while (time < config.predictTime) {
     pPose = motion(pPose, velocity, config.dt);
       
-    for(int i = 0; i < sizeof(pointCloud)/sizeof(pointCloud[0]); ++i) {
-      dx = pPose.point.x - pointCloud[i].x;
-      dy = pPose.point.y - pointCloud[i].y;
-      x = -dx * cos(pPose.yaw) +  -dy * -sin(pPose.yaw);
-      y = -dx * sin(pPose.yaw) +  -dy * cos(pPose.yaw);
+    for(int i = 0; i < pointCloud->size; ++i) {
+      dx = pPose.point.x - pointCloud->points[i].x;
+      dy = pPose.point.y - pointCloud->points[i].y;
+      x = -dx * cos(pPose.yaw) + -dy * sin(pPose.yaw);
+      y = -dx * -sin(pPose.yaw) + -dy * cos(pPose.yaw);
       if (x <= config.base.xtop &&
 	  x >= config.base.xbottom &&
 	  y <= config.base.yleft &&
-	  y >= config.base.yright)
+	  y >= config.base.yright){
 	return FLT_MAX;
-      r = sqrt(dx*dx + dy*dy);
+      }
+      r = sqrtf(dx*dx + dy*dy);
       if (r < minr)
 	minr = r;
     }
@@ -85,7 +102,8 @@ calculateClearanceCost(Pose pose, Velocity velocity, Point *pointCloud, Robot co
 }
 
 Velocity
-planning(Pose pose, Velocity velocity, Point goal, Point *pointCloud, Robot config){
+planning(Pose pose, Velocity velocity, Point goal,
+	 PointCloud *pointCloud, Config config){
   DynamicWindow *dw;
   createDynamicWindow(velocity, config, &dw);
   Velocity pVelocity;
@@ -95,10 +113,10 @@ planning(Pose pose, Velocity velocity, Point goal, Point *pointCloud, Robot conf
   Velocity bestVelocity;
   for (int i = 0; i < dw->nPossibleV; ++i) {
     for (int j = 0; j < dw->nPossibleW; ++j) {
-      pPose = motion(pPose, pVelocity, config.predictTime);
+      pPose = pose;
       pVelocity.linearVelocity = dw->possibleV[i];
       pVelocity.angularVelocity = dw->possibleW[j];
-
+      pPose = motion(pPose, pVelocity, config.predictTime);
       cost = 
 	config.velocity * calculateVelocityCost(pVelocity, config) + 
 	config.heading * calculateHeadingCost(pPose, goal) +
@@ -109,62 +127,6 @@ planning(Pose pose, Velocity velocity, Point goal, Point *pointCloud, Robot conf
       }
     }
   }
-  free(dw);
+  freeDynamicWindow(dw);
   return bestVelocity;
-}
-
-void main() {
-  Robot config;
-  Rect rect;
-
-  rect.xtop = 0.6;
-  rect.yleft = 0.5;
-  rect.xbottom = -0.6;
-  rect.yright = -0.5;
-
-  config.maxSpeed = 0.5;
-  config.minSpeed = 0.0;
-  config.maxYawrate = 40.0 * M_PI / 180.0;
-  config.maxAccel = 15.0;
-  config.maxdYawrate = 110.0 * M_PI / 180.0;
-  config.velocityResolution = 0.1;
-  config.yawrateResolution = 1.0 * M_PI / 180.0;
-  config.dt = 0.1;
-  config.predictTime = 1.0;
-  config.heading = 0.5;
-  config.clearance = 0.5;
-  config.velocity = 0.5;
-  config.base = rect;
-
-  Velocity velocity;
-  velocity.linearVelocity = 0.0;
-  velocity.angularVelocity = 0.0;
-
-  Pose pose;
-  pose.point.x = 0.0;
-  pose.point.y = 0.0;
-  pose.yaw = 0.0;
-
-  Point goal;
-  goal.x = 10.0;
-  goal.y = 0.0;
-
-  Point pointCloud[10];
-  pointCloud[0].x = 0.0; pointCloud[0].y = 1.0;
-  pointCloud[1].x = 2.0; pointCloud[1].y = 2.0;
-  pointCloud[2].x = 0.0; pointCloud[2].y = 3.0;
-  pointCloud[3].x = 3.0; pointCloud[3].y = 1.0;
-  pointCloud[4].x = 3.5; pointCloud[4].y = 4.0;
-  pointCloud[5].x = 5.0; pointCloud[5].y = 4.0;
-  pointCloud[6].x = 7.0; pointCloud[6].y = 1.0;
-  pointCloud[7].x = 9.0; pointCloud[7].y = 1.0;
-  pointCloud[8].x = 8.0; pointCloud[8].y = 8.0;
-  pointCloud[9].x = 10.0; pointCloud[9].y = 3.0;
-
-  pose = motion(pose, velocity, config.dt);
-  printf("%f %f %f\n", pose.point.x, pose.point.y, pose.yaw);
-  velocity = planning(pose, velocity, goal, pointCloud, config);
-  printf("%f %f\n", velocity.linearVelocity, velocity.angularVelocity);
-  pose = motion(pose, velocity, config.dt);
-  printf("%f %f %f\n", pose.point.x, pose.point.y, pose.yaw);
 }
