@@ -1,4 +1,4 @@
-# distutils: sources = ./src/dwa.c
+# distutils: sources = src/dwa.c
 # distutils: include_dirs = src
 
 from libc.stdlib cimport malloc, free
