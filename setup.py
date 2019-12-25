@@ -12,7 +12,7 @@ with open(os.path.join(directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='dynamic-window-approach',
     description='Dynamic Window Approach algorithm written in C with Python Bindings',
-    version='1.0.2',
+    version='1.0.3',
     author='Göktuğ Karakaşlı',
     author_email='karakasligk@gmail.com',
     license='MIT',
@@ -22,7 +22,7 @@ setup(
         include_dirs=[numpy.get_include(), 'src'])]),
     url='https://github.com/goktug97/DynamicWindowApproach',
     download_url=(
-        'https://github.com/goktug97/DynamicWindowApproach/archive/v1.0.2.tar.gz'),
+        'https://github.com/goktug97/DynamicWindowApproach/archive/v1.0.3.tar.gz'),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
