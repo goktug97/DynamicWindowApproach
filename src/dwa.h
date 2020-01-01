@@ -15,11 +15,12 @@
     __typeof__ (b) _b = (b);			\
     _a < _b ? _a : _b; })
 
+
 typedef struct {
-  float xtop;
-  float yleft;
-  float xbottom;
-  float yright;
+  float xmin;
+  float ymin;
+  float xmax;
+  float ymax;
 } Rect;
 
 typedef struct {

@@ -117,10 +117,10 @@ cdef class Config:
         self.thisptr.heading = heading
         self.thisptr.clearance = clearance
         self.thisptr.velocity = velocity
-        self.thisptr.base.xtop = base[0]
-        self.thisptr.base.yleft = base[1]
-        self.thisptr.base.xbottom = base[2]
-        self.thisptr.base.yright = base[3]
+        self.thisptr.base.xmin = base[0]
+        self.thisptr.base.ymin = base[1]
+        self.thisptr.base.xmax = base[2]
+        self.thisptr.base.ymax = base[3]
         if self.thisptr is NULL:
             raise MemoryError
 
@@ -225,22 +225,22 @@ cdef class Config:
             self.thisptr.velocity = value
 
     def __str__(self):
-        string = f'maxSpeed               {self.thisptr.maxSpeed}' 
-        string = f'{string}\nminSpeed               {self.thisptr.minSpeed}' 
-        string = f'{string}\nmaxYawrate             {self.thisptr.maxYawrate}' 
-        string = f'{string}\nmaxAccel               {self.thisptr.maxAccel}' 
-        string = f'{string}\nmaxdYawrate            {self.thisptr.maxdYawrate}' 
-        string = f'{string}\nvelocityResolution     {self.thisptr.velocityResolution}' 
-        string = f'{string}\nyawrateResolution      {self.thisptr.yawrateResolution}' 
-        string = f'{string}\ndt                     {self.thisptr.dt}' 
-        string = f'{string}\npredictTime            {self.thisptr.predictTime}' 
-        string = f'{string}\nheading                {self.thisptr.heading}' 
-        string = f'{string}\nclearance              {self.thisptr.clearance}' 
-        string = f'{string}\nvelocity               {self.thisptr.velocity}' 
-        string = f'{string}\nbase.xtop              {self.thisptr.base.xtop}' 
-        string = f'{string}\nbase.yleft             {self.thisptr.base.yleft}' 
-        string = f'{string}\nbase.xbottom           {self.thisptr.base.xbottom}' 
-        string = f'{string}\nbase.yright            {self.thisptr.base.yright}' 
+        string = f'maxSpeed               {self.thisptr.maxSpeed}'
+        string = f'{string}\nminSpeed               {self.thisptr.minSpeed}'
+        string = f'{string}\nmaxYawrate             {self.thisptr.maxYawrate}'
+        string = f'{string}\nmaxAccel               {self.thisptr.maxAccel}'
+        string = f'{string}\nmaxdYawrate            {self.thisptr.maxdYawrate}'
+        string = f'{string}\nvelocityResolution     {self.thisptr.velocityResolution}'
+        string = f'{string}\nyawrateResolution      {self.thisptr.yawrateResolution}'
+        string = f'{string}\ndt                     {self.thisptr.dt}'
+        string = f'{string}\npredictTime            {self.thisptr.predictTime}'
+        string = f'{string}\nheading                {self.thisptr.heading}'
+        string = f'{string}\nclearance              {self.thisptr.clearance}'
+        string = f'{string}\nvelocity               {self.thisptr.velocity}'
+        string = f'{string}\nbase.xtop              {self.thisptr.base.xtop}'
+        string = f'{string}\nbase.yleft             {self.thisptr.base.yleft}'
+        string = f'{string}\nbase.xbottom           {self.thisptr.base.xbottom}'
+        string = f'{string}\nbase.yright            {self.thisptr.base.yright}'
         return string
 
 cdef class PointCloud:
@@ -262,6 +262,66 @@ cdef class PointCloud:
     def __dealloc__(self):
         if self.thisptr is not NULL:
             cdwa.freePointCloud(self.thisptr)
+
+cdef class DynamicWindow:
+    cdef cdwa.DynamicWindow* thisptr
+
+    def __cinit__(self, tuple velocity, Config config):
+        cdef float v , w
+        v, w = velocity
+        cdef Velocity _velocity = Velocity(v, w)
+        cdwa.createDynamicWindow(_velocity.thisptr[0], config.thisptr[0], &self.thisptr)
+        if self.thisptr is NULL:
+            raise MemoryError
+
+    property possible_v:
+        def __get__(self):
+            assert self.thisptr is not NULL
+            return np.array(
+                <np.float32_t[:self.thisptr.nPossibleV]>self.thisptr.possibleV,
+                dtype=np.float32)
+
+    property possible_w:
+        def __get__(self):
+            assert self.thisptr is not NULL
+            return np.array(
+                <np.float32_t[:self.thisptr.nPossibleW]>self.thisptr.possibleW,
+                dtype=np.float32)
+
+    def __dealloc__(self):
+        if self.thisptr is not NULL:
+            cdwa.freeDynamicWindow(self.thisptr)
+
+    def __str__(self):
+        string = f'Possible Linear Velocities: {self.possible_v}'
+        string = f'{string}\nPossible Angular Velocities: {self.possible_w}'
+        return string
+
+def calculate_velocity_cost(tuple velocity, Config config):
+    cdef float v , w
+    v, w = velocity
+    cdef Velocity _velocity = Velocity(v, w)
+    return cdwa.calculateVelocityCost(_velocity.thisptr[0], config.thisptr[0]);
+
+def calculate_heading_cost(tuple pose, tuple goal):
+    cdef float x, y, yaw, gx, gy
+    x, y, yaw = pose
+    gx, gy = goal
+    cdef Pose _pose = Pose(Point(x, y), yaw)
+    cdef Point _goal = Point(gx, gy)
+    return cdwa.calculateHeadingCost(_pose.thisptr[0], _goal.thisptr[0])
+
+def calculate_clearance_cost(tuple pose, tuple velocity,
+                             np.ndarray[np.float32_t, ndim=2] point_cloud,
+                             Config config):
+    cdef float x, y, yaw, v , w
+    cdef PointCloud _point_cloud = PointCloud(point_cloud)
+    x, y, yaw = pose
+    v, w = velocity
+    cdef Pose _pose = Pose(Point(x, y), yaw)
+    cdef Velocity _velocity = Velocity(v, w)
+    return cdwa.calculateClearanceCost(_pose.thisptr[0], _velocity.thisptr[0],
+                                       _point_cloud.thisptr, config.thisptr[0])
 
 def motion(tuple pose, tuple velocity, float dt):
     cdef float x, y, yaw, v , w

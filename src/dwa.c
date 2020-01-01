@@ -2,8 +2,10 @@
 
 void
 createDynamicWindow(Velocity velocity, Config config, DynamicWindow **dynamicWindow) {
-  float minV = max(config.minSpeed, velocity.linearVelocity - config.maxAccel * config.dt);
-  float maxV = min(config.maxSpeed, velocity.linearVelocity + config.maxAccel * config.dt);
+  float
+    minV = max(config.minSpeed, velocity.linearVelocity - config.maxAccel * config.dt);
+  float
+    maxV = min(config.maxSpeed, velocity.linearVelocity + config.maxAccel * config.dt);
   float minW =
     max(-config.maxYawrate, velocity.angularVelocity - config.maxdYawrate * config.dt);
   float maxW =
@@ -86,10 +88,10 @@ calculateClearanceCost
       dy = pPose.point.y - pointCloud->points[i].y;
       x = -dx * cos(pPose.yaw) + -dy * sin(pPose.yaw);
       y = -dx * -sin(pPose.yaw) + -dy * cos(pPose.yaw);
-      if (x <= config.base.xtop &&
-	  x >= config.base.xbottom &&
-	  y <= config.base.yleft &&
-	  y >= config.base.yright){
+      if (x <= config.base.xmax &&
+	  x >= config.base.xmin &&
+	  y <= config.base.ymax &&
+	  y >= config.base.ymin){
 	return FLT_MAX;
       }
       r = sqrtf(dx*dx + dy*dy);

@@ -1,9 +1,9 @@
 cdef extern from "dwa.h":
     ctypedef struct Rect:
-        float xtop
-        float yleft
-        float xbottom
-        float yright
+        float xmin
+        float ymin
+        float xmax
+        float ymax
     ctypedef struct Config:
         float maxSpeed
         float minSpeed
@@ -39,6 +39,13 @@ cdef extern from "dwa.h":
     Pose motion(Pose pose, Velocity velocity, float dt);
     Velocity planning(
         Pose pose, Velocity velocity, Point goal,
-        PointCloud *point_cloud, Config config);
+        PointCloud *pointCloud, Config config);
     PointCloud* createPointCloud(int size);
     void freePointCloud(PointCloud* pointCloud);
+    void freeDynamicWindow(DynamicWindow *dynamicWindow);
+    void createDynamicWindow(
+        Velocity velocity, Config config, DynamicWindow **dynamicWindow);
+    float calculateVelocityCost(Velocity velocity, Config config);
+    float calculateHeadingCost(Pose pose, Point goal);
+    float calculateClearanceCost(
+        Pose pose, Velocity velocity, PointCloud *pointCloud, Config config);

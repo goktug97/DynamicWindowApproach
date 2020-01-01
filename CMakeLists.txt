@@ -10,17 +10,18 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 set(DWA_VERSION_MAJOR 1)
-set(DWA_VERSION_MINOR 0)
-set(DWA_VERSION_PATCH 3)
+set(DWA_VERSION_MINOR 1)
+set(DWA_VERSION_PATCH 0)
 set(DWA_VERSION_STRING ${DWA_VERSION_MAJOR}.${DWA_VERSION_MINOR}.${DWA_VERSION_PATCH})
 
 # Build demo executable
 include_directories(src)
-add_executable(demo src/demo.c src/dwa.c)
+add_executable(demo examples/demo.c src/dwa.c)
 set_target_properties(demo
   PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "../bin")
-target_link_libraries(demo m)
+target_link_libraries(demo m SDL GL glut)
+set_target_properties(demo PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 # Build shared library
 add_library(dwa SHARED src/dwa.c)
