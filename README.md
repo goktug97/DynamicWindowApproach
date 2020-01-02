@@ -316,7 +316,7 @@ The memory is allocated dynamically inside of the function and must be freed usi
         - **velocity:** tuple: (Linear Velocity, Angular Velocity)
         - **config:** [Config](#config) class
 
-[Dynamic Window <cite>[2]</cite>](https://raw.githubusercontent.com/goktug97/DynamicWindowApproach/master/img/dynamic_window.jpg)
+![Dynamic Window <cite>[2]</cite>](https://raw.githubusercontent.com/goktug97/DynamicWindowApproach/master/img/dynamic_window.jpg)
 
 #### freeDynamicWindow
 
@@ -430,7 +430,7 @@ simulate motion in a simulated environment.
 - Python
 
     ``` python
-    def calculate_clearance_cost(pose, velocity, point_cloud, config):
+    clearance_cost = calculate_clearance_cost(pose, velocity, point_cloud, config)
     ```
 
     * **Parameters:**
