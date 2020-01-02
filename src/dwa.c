@@ -89,14 +89,14 @@ calculateClearanceCost
       x = -dx * cos(pPose.yaw) + -dy * sin(pPose.yaw);
       y = -dx * -sin(pPose.yaw) + -dy * cos(pPose.yaw);
       if (x <= config.base.xmax &&
-	  x >= config.base.xmin &&
-	  y <= config.base.ymax &&
-	  y >= config.base.ymin){
-	return FLT_MAX;
+          x >= config.base.xmin &&
+          y <= config.base.ymax &&
+          y >= config.base.ymin){
+        return FLT_MAX;
       }
       r = sqrtf(dx*dx + dy*dy);
       if (r < minr)
-	minr = r;
+        minr = r;
     }
     time += config.dt;
   }
@@ -105,7 +105,7 @@ calculateClearanceCost
 
 Velocity
 planning(Pose pose, Velocity velocity, Point goal,
-	 PointCloud *pointCloud, Config config){
+         PointCloud *pointCloud, Config config) {
   DynamicWindow *dw;
   createDynamicWindow(velocity, config, &dw);
   Velocity pVelocity;
@@ -120,12 +120,13 @@ planning(Pose pose, Velocity velocity, Point goal,
       pVelocity.angularVelocity = dw->possibleW[j];
       pPose = motion(pPose, pVelocity, config.predictTime);
       cost = 
-	config.velocity * calculateVelocityCost(pVelocity, config) + 
-	config.heading * calculateHeadingCost(pPose, goal) +
-	config.clearance * calculateClearanceCost(pose, pVelocity, pointCloud, config);
+        config.velocity * calculateVelocityCost(pVelocity, config) +
+        config.heading * calculateHeadingCost(pPose, goal) +
+        config.clearance * calculateClearanceCost(pose, pVelocity,
+                                                  pointCloud, config);
       if (cost < total_cost) {
-	total_cost = cost;
-	bestVelocity = pVelocity;
+        total_cost = cost;
+        bestVelocity = pVelocity;
       }
     }
   }

@@ -12,6 +12,11 @@ void renderRectangle(Rect rect, Pose pose);
 void renderPointCloud(PointCloud *pointCloud, int size);
 void drawCircle(GLfloat x, GLfloat y, GLfloat radius);
 
+/*
+NOTE: 1 Unit = 0.1 m
+That's why everything is multiplied or divided by 10.
+*/
+
 void initGL(void) {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -28,7 +33,7 @@ void drawCircle(GLfloat x, GLfloat y, GLfloat radius){
   glVertex2f(x, y);
   for (int i = 0; i <= nTriangle; i++) { 
     glVertex2f(x + (radius * cos(i * M_PI2 / nTriangle)), 
-	       y + (radius * sin(i * M_PI2 / nTriangle)));
+               y + (radius * sin(i * M_PI2 / nTriangle)));
   }
   glEnd();
 }
@@ -45,8 +50,8 @@ void renderPointCloud(PointCloud *pointCloud, int size){
 void renderRectangle(Rect rect, Pose pose) {
   glPushMatrix();
   glTranslatef(pose.point.x*10.0,
-	       pose.point.y*10.0,
-	       0.0f);
+               pose.point.y*10.0,
+               0.0f);
   glRotatef(pose.yaw * 180.0/M_PI, 0, 0, 1);
   glBegin(GL_POLYGON);
   glColor3f(1, 0, 0);
@@ -117,44 +122,50 @@ int main() {
         running = 0;
         break;
       case SDL_KEYDOWN:
-	switch (sdlEvent.key.keysym.sym) {
-	case SDLK_ESCAPE:
-	  running = 0;
-	case SDLK_r:
-	  freePointCloud(pointCloud);
-	  pointCloud = createPointCloud(100);
-	  currentIdx = 0;
-	  pose.point.x = 0.0;
-	  pose.point.y = 0.0;
-	  pose.yaw = 0.0;
-	}
-	break;
+        switch (sdlEvent.key.keysym.sym) {
+        case SDLK_ESCAPE:
+          running = 0;
+        case SDLK_r:
+          freePointCloud(pointCloud);
+          pointCloud = createPointCloud(100);
+          currentIdx = 0;
+          pose.point.x = 0.0;
+          pose.point.y = 0.0;
+          pose.yaw = 0.0;
+          velocity.linearVelocity = 0.0;
+          velocity.angularVelocity = 0.0;
+        }
+        break;
       case SDL_MOUSEBUTTONDOWN:
-	drawing = 1;
+        drawing = 1;
         break;
       case SDL_MOUSEBUTTONUP:
-	drawing = 0;
-	break;
+        drawing = 0;
+        break;
       case SDL_MOUSEMOTION:
-	if (drawing) {
-	  pointCloud->points[currentIdx].x = (sdlEvent.button.x - RESOLUTION_WIDTH/2.0)/10.0;
-	  pointCloud->points[currentIdx].y = (-sdlEvent.button.y + RESOLUTION_HEIGHT/2.0)/10.0;
-	  currentIdx++;
-	  if (!(currentIdx % 100)) {
-	    tmpPointCloud = createPointCloud(currentIdx);
-	    memcpy(tmpPointCloud->points, pointCloud->points, currentIdx*sizeof(Point));
-	    freePointCloud(pointCloud);
-	    pointCloud = createPointCloud(currentIdx+100);
-	    memcpy(pointCloud->points, tmpPointCloud->points, currentIdx*sizeof(Point));
-	    freePointCloud(tmpPointCloud);
-	  }
-	} else {
-	  goal.x = (sdlEvent.button.x - RESOLUTION_WIDTH/2.0)/10.0;
-	  goal.y = (-sdlEvent.button.y + RESOLUTION_HEIGHT/2.0)/10.0;
-	  glColor3f(0, 1, 0);
-	  drawCircle(goal.x*10, goal.y*10, 3);
-	}
-	break;
+        if (drawing) {
+          pointCloud->points[currentIdx].x = (sdlEvent.button.x -
+                                              RESOLUTION_WIDTH/2.0)/10.0;
+          pointCloud->points[currentIdx].y = (-sdlEvent.button.y +
+                                              RESOLUTION_HEIGHT/2.0)/10.0;
+          currentIdx++;
+          if (!(currentIdx % 100)) {
+            tmpPointCloud = createPointCloud(currentIdx);
+            memcpy(tmpPointCloud->points, pointCloud->points,
+                   currentIdx*sizeof(Point));
+            freePointCloud(pointCloud);
+            pointCloud = createPointCloud(currentIdx+100);
+            memcpy(pointCloud->points, tmpPointCloud->points,
+                   currentIdx*sizeof(Point));
+            freePointCloud(tmpPointCloud);
+          }
+        } else {
+          goal.x = (sdlEvent.button.x - RESOLUTION_WIDTH/2.0)/10.0;
+          goal.y = (-sdlEvent.button.y + RESOLUTION_HEIGHT/2.0)/10.0;
+          glColor3f(0, 1, 0);
+          drawCircle(goal.x*10, goal.y*10, 3);
+        }
+        break;
       }
     }
     if (currentIdx) {

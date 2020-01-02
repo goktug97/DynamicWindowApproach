@@ -9,6 +9,7 @@ import dwa
 class Demo(object):
     def __init__(self):
         # 1 px = 0.1 m
+        # That's why everything is multiplied or divided by 10.
         cv2.namedWindow('cvwindow')
         cv2.setMouseCallback('cvwindow', self.callback)
         self.drawing = False
