@@ -125,6 +125,7 @@ int main() {
         switch (sdlEvent.key.keysym.sym) {
         case SDLK_ESCAPE:
           running = 0;
+          break;
         case SDLK_r:
           freePointCloud(pointCloud);
           pointCloud = createPointCloud(100);
@@ -134,10 +135,12 @@ int main() {
           pose.yaw = 0.0;
           velocity.linearVelocity = 0.0;
           velocity.angularVelocity = 0.0;
+          break;
         }
         break;
       case SDL_MOUSEBUTTONDOWN:
-        drawing = 1;
+        if (sdlEvent.button.which == 0)
+          drawing = 1;
         break;
       case SDL_MOUSEBUTTONUP:
         drawing = 0;
