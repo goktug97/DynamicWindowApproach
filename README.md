@@ -113,10 +113,6 @@ bin folder. The bin folder is created after the compile so if you didn't
 compile the demo while installing the library. Go to `build` directory and run
 `make demo`.
 
-- There is also a web application demo in
-a different repository which can be find at [DWA Web
-Demo](https://github.com/goktug97/DWAWebDemo).
-
 ## Documentation
 
 While the [planning](#planning) function is the only function that a user needs
