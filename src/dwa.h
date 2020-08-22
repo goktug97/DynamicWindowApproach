@@ -4,6 +4,7 @@
 #include <math.h>
 #include <float.h>
 
+#ifndef _WIN32
 /* https://stackoverflow.com/a/3437484 */
 #define max(a,b)				\
   ({ __typeof__ (a) _a = (a);			\
@@ -14,7 +15,7 @@
   ({ __typeof__ (a) _a = (a);			\
     __typeof__ (b) _b = (b);			\
     _a < _b ? _a : _b; })
-
+#endif
 
 typedef struct {
   float xmin;

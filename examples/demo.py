@@ -91,7 +91,8 @@ class Demo(object):
             box = np.int0(box)
             cv2.drawContours(self.map,[box],0,(0,0,255),-1)
 
-            fps = int(1.0 / (time.time() - prev_time))
+            # Prevent divide by zero
+            fps = int(1.0 / (time.time() - prev_time + 1e-10))
             cv2.putText(self.map, f'FPS: {fps}', (20, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
