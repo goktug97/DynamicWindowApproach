@@ -12,7 +12,7 @@ with open(os.path.join(directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='dynamic-window-approach',
     description='Dynamic Window Approach algorithm written in C with Python Bindings',
-    version='1.1.0',
+    version='1.1.1',
     author='Göktuğ Karakaşlı',
     author_email='karakasligk@gmail.com',
     license='MIT',
