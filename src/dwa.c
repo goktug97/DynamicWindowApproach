@@ -9,7 +9,7 @@ createDynamicWindow(Velocity velocity, Config config, DynamicWindow **dynamicWin
   float minW =
     max(-config.maxYawrate, velocity.angularVelocity - config.maxdYawrate * config.dt);
   float maxW =
-    max(config.maxYawrate, velocity.angularVelocity + config.maxdYawrate * config.dt);
+    min(config.maxYawrate, velocity.angularVelocity + config.maxdYawrate * config.dt);
 
   int nPossibleV = (maxV - minV) / config.velocityResolution;
   int nPossibleW = (maxW - minW) / config.yawrateResolution;
