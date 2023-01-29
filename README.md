@@ -157,7 +157,7 @@ cdef Point _goal = Point(gx, gy)
     * **Parameters**:
         - **maxSpeed** - floating-point maximum linear speed robot can reach [m/s]
         - **minSpeed** - floating-point minimum linea speed robot can fall [m/s]
-        - **maxYawrate** - floating-point maximum angular spped robot can reach [yaw/s]
+        - **maxYawrate** - floating-point maximum angular speed robot can reach [yaw/s]
         - **maxAccel** - floating-point maximum linear acceleration robot can reach [m/ss]
         - **maxdYawrate** - floating-point maximum angular acceleration robot can reach [yaw/ss]
         - **velocityResolution** - floating-point linear speed resolution [m/s]
